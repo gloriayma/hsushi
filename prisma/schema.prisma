@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  name         String
+  // All money is integer cents of a LittleSky penny. 1000 pennies = 100_000.
+  balanceCents Int        @default(100000)
+  isAdmin      Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+  markets      Market[]
+  positions    Position[]
+  trades       Trade[]
+}
+
+// Binary LMSR market. Price of YES = sigmoid((qYes - qNo) / b).
+model Market {
+  id         String     @id @default(cuid())
+  question   String
+  // Written resolution criteria — shown prominently, set at creation.
+  criteria   String
+  creatorId  String
+  creator    User       @relation(fields: [creatorId], references: [id])
+  b          Int // LMSR liquidity parameter: 50 / 100 / 200
+  qYes       Float      @default(0)
+  qNo        Float      @default(0)
+  status     String     @default("OPEN") // OPEN | YES | NO | VOID
+  closesAt   DateTime? // optional: trading stops here even if unresolved
+  resolvedAt DateTime?
+  createdAt  DateTime   @default(now())
+  positions  Position[]
+  trades     Trade[]
+}
+
+model Position {
+  userId    String
+  marketId  String
+  user      User   @relation(fields: [userId], references: [id])
+  market    Market @relation(fields: [marketId], references: [id])
+  sharesYes Float  @default(0)
+  sharesNo  Float  @default(0)
+  // Net cents paid into this market (buys - sells). Used for VOID refunds.
+  netSpentCents Int @default(0)
+
+  @@id([userId, marketId])
+}
+
+model Trade {
+  id        String   @id @default(cuid())
+  userId    String
+  marketId  String
+  user      User     @relation(fields: [userId], references: [id])
+  market    Market   @relation(fields: [marketId], references: [id])
+  side      String // YES | NO
+  kind      String // BUY | SELL
+  shares    Float // always positive
+  costCents Int // positive: user paid; negative: user received
+  priceAfter Float // YES probability after the trade
+  createdAt DateTime @default(now())
+
+  @@index([marketId, createdAt])
+  @@index([userId])
+}
