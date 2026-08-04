@@ -200,6 +200,28 @@ export async function resolveMarket(
   return { ok: true };
 }
 
+export async function postComment(
+  marketId: string,
+  body: string
+): Promise<ActionResult> {
+  const user = await getSessionUser();
+  if (!user) return fail("Not logged in.");
+  const trimmed = body.trim();
+  if (!trimmed) return fail("Say something.");
+  if (trimmed.length > 1000) return fail("Keep it under 1000 characters.");
+
+  try {
+    await prisma.comment.create({
+      data: { marketId, userId: user.id, body: trimmed },
+    });
+  } catch {
+    return fail("Comment failed.");
+  }
+
+  revalidatePath(`/market/${marketId}`);
+  return { ok: true };
+}
+
 export async function logout(): Promise<void> {
   const { destroySession } = await import("./session");
   await destroySession();

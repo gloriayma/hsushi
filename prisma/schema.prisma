@@ -18,6 +18,7 @@ model User {
   markets      Market[]
   positions    Position[]
   trades       Trade[]
+  comments     Comment[]
 }
 
 // Binary LMSR market. Price of YES = sigmoid((qYes - qNo) / b).
@@ -37,6 +38,7 @@ model Market {
   createdAt  DateTime   @default(now())
   positions  Position[]
   trades     Trade[]
+  comments   Comment[]
 }
 
 model Position {
@@ -67,4 +69,16 @@ model Trade {
 
   @@index([marketId, createdAt])
   @@index([userId])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  marketId  String
+  userId    String
+  market    Market   @relation(fields: [marketId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+  body      String
+  createdAt DateTime @default(now())
+
+  @@index([marketId, createdAt])
 }

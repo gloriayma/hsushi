@@ -5,6 +5,7 @@ import { price } from "@/lib/lmsr";
 import { pennies, pct } from "@/lib/fmt";
 import TradePanel from "./trade-panel";
 import ResolvePanel from "./resolve-panel";
+import CommentBox from "./comment-box";
 
 export default async function MarketPage({
   params,
@@ -21,7 +22,7 @@ export default async function MarketPage({
   });
   if (!market) notFound();
 
-  const [position, trades] = await Promise.all([
+  const [position, trades, comments] = await Promise.all([
     prisma.position.findUnique({
       where: { userId_marketId: { userId: user.id, marketId: id } },
     }),
@@ -29,6 +30,11 @@ export default async function MarketPage({
       where: { marketId: id },
       orderBy: { createdAt: "desc" },
       take: 20,
+      include: { user: true },
+    }),
+    prisma.comment.findMany({
+      where: { marketId: id },
+      orderBy: { createdAt: "desc" },
       include: { user: true },
     }),
   ]);
@@ -121,6 +127,31 @@ export default async function MarketPage({
           </ul>
         </section>
       )}
+
+      <section className="space-y-3">
+        <h2>discussion</h2>
+        <CommentBox marketId={market.id} />
+        {comments.length > 0 && (
+          <ul className="divide-y divide-[color:var(--line)] border-y border-[color:var(--line)] text-sm">
+            {comments.map((c) => (
+              <li key={c.id} className="py-2">
+                <div className="mb-1 flex items-baseline gap-2">
+                  <span>{c.user.name}</span>
+                  <span className="ml-auto text-[color:var(--muted)]">
+                    {c.createdAt.toLocaleString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      hour: "numeric",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                </div>
+                <p className="whitespace-pre-wrap">{c.body}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </div>
   );
 }
