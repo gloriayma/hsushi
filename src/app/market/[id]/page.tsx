@@ -5,6 +5,7 @@ import { price } from "@/lib/lmsr";
 import { pennies, pct } from "@/lib/fmt";
 import TradePanel from "./trade-panel";
 import ResolvePanel from "./resolve-panel";
+import PriceChart from "./price-chart";
 import CommentBox from "./comment-box";
 
 export default async function MarketPage({
@@ -22,7 +23,7 @@ export default async function MarketPage({
   });
   if (!market) notFound();
 
-  const [position, trades, comments] = await Promise.all([
+  const [position, trades, historyTrades, comments] = await Promise.all([
     prisma.position.findUnique({
       where: { userId_marketId: { userId: user.id, marketId: id } },
     }),
@@ -31,6 +32,11 @@ export default async function MarketPage({
       orderBy: { createdAt: "desc" },
       take: 20,
       include: { user: true },
+    }),
+    prisma.trade.findMany({
+      where: { marketId: id },
+      orderBy: { createdAt: "asc" },
+      select: { createdAt: true, priceAfter: true },
     }),
     prisma.comment.findMany({
       where: { marketId: id },
@@ -85,6 +91,18 @@ export default async function MarketPage({
           </p>
         )}
       </section>
+
+      <PriceChart
+        createdAt={market.createdAt}
+        trades={historyTrades}
+        currentPrice={p}
+        resolvedAt={market.resolvedAt}
+        resolvedTo={
+          market.status === "YES" || market.status === "NO" || market.status === "VOID"
+            ? (market.status as "YES" | "NO" | "VOID")
+            : null
+        }
+      />
 
       {tradingOpen && (
         <TradePanel
