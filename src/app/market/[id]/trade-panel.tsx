@@ -70,8 +70,8 @@ export default function TradePanel(props: {
     `flex-1 ${
       active
         ? isNo
-          ? "border-[color:var(--accent)] text-[color:var(--accent)]"
-          : "border-[color:var(--line-strong)]"
+          ? "bg-[color:var(--accent)] border-[color:var(--accent)] text-[color:var(--bg)]"
+          : "bg-[color:var(--ink)] border-[color:var(--ink)] text-[color:var(--bg)]"
         : "text-[color:var(--muted)]"
     }`;
 
