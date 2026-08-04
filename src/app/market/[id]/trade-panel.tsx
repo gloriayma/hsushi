@@ -59,25 +59,23 @@ export default function TradePanel(props: {
     });
   }
 
-  const tabCls = (active: boolean) =>
-    `flex-1 border-0 border-b p-0 pb-1 !rounded-none ${
-      active
-        ? "border-[color:var(--ink)] text-[color:var(--ink)]"
-        : "border-transparent text-[color:var(--muted)]"
-    }`;
+  const inkFill =
+    "bg-[color:var(--ink)] border-[color:var(--ink)] text-[color:var(--bg)]";
+  const accentFill =
+    "bg-[color:var(--accent)] border-[color:var(--accent)] text-[color:var(--bg)]";
+  const unselected = "text-[color:var(--muted)]";
+
+  const tabCls = (active: boolean) => `flex-1 ${active ? inkFill : unselected}`;
 
   const sideCls = (active: boolean, isNo: boolean) =>
-    `flex-1 ${
-      active
-        ? isNo
-          ? "border-[color:var(--accent)] text-[color:var(--accent)]"
-          : "border-[color:var(--line-strong)]"
-        : "text-[color:var(--muted)]"
-    }`;
+    `flex-1 ${active ? (isNo ? accentFill : inkFill) : unselected}`;
+
+  const presetCls = (active: boolean) =>
+    `text-sm ${active ? inkFill : unselected}`;
 
   return (
     <div className="space-y-3 border-y border-[color:var(--line)] py-5">
-      <div className="flex gap-6 text-sm">
+      <div className="flex gap-2 text-sm">
         <button className={tabCls(kind === "BUY")} onClick={() => setKind("BUY")}>
           buy
         </button>
@@ -123,7 +121,7 @@ export default function TradePanel(props: {
             <button
               key={q}
               onClick={() => setAmount(String(q))}
-              className="text-sm text-[color:var(--muted)]"
+              className={presetCls(amount === String(q))}
             >
               {q}
             </button>
@@ -131,7 +129,7 @@ export default function TradePanel(props: {
         ) : (
           <button
             onClick={() => setAmount(String(held))}
-            className="text-sm text-[color:var(--muted)]"
+            className={presetCls(amount === String(held))}
           >
             max
           </button>
@@ -146,7 +144,7 @@ export default function TradePanel(props: {
       <button
         onClick={submit}
         disabled={pending || !Number.isFinite(amt) || amt <= 0}
-        className="w-full"
+        className={`w-full ${side === "NO" ? accentFill : inkFill}`}
       >
         {pending ? "…" : `${kind === "BUY" ? "buy" : "sell"} ${side.toLowerCase()}`}
       </button>
